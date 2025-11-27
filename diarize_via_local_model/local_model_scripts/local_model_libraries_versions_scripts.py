@@ -1,0 +1,3 @@
+from diarize_via_local_model.local_model_fuctions.local_model_libraries_versions_funcs import get_features_versions
+
+get_features_versions()
