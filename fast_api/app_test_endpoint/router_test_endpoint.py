@@ -7,7 +7,7 @@ from fastapi.responses import JSONResponse
 
 from configs.settings import DIARIZE_OPTIONS
 from fast_api.app_auth.funcs_auth import verify_prod_username_password
-from fast_api.app_auth.scheme_auth import AuthDataBert
+from fast_api.app_auth.scheme_auth import AuthDataDiarize
 
 bert_base_url_name = DIARIZE_OPTIONS.DIARIZE_API_URL_BASE_NAME
 router_develop_test_endpoint = APIRouter(prefix=f"/{bert_base_url_name}",
@@ -17,13 +17,14 @@ router_develop_test_endpoint = APIRouter(prefix=f"/{bert_base_url_name}",
 @router_develop_test_endpoint.post(path="/develop_test_endpoint/",
                                    response_model=None)
 async def develop_test_endpoint(
-        auth_data: AuthDataBert,
+        auth_data: AuthDataDiarize,
         # bert_model_inst: Annotated[
         #     ClassifierBERT, Depends(get_bert_model_instance_dep)]
 ) -> JSONResponse | None:
-    verify_prod_username_password(username=auth_data.username,
-                                  password=auth_data.password)
-    print("\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ TEST ENDPOINT [START]")
+    pass
+    # verify_prod_username_password(username=auth_data.username,
+    #                               password=auth_data.password)
+    # print("\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ TEST ENDPOINT [START]")
     # async with RedisAsyncConnection() as redis_conn:
     #     await redis_conn.setex("TestKey", timedelta(minutes=10), "TestValue")
     #
