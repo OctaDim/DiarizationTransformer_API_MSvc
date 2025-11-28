@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 
-class AccountDataBert(BaseModel):
+class AccountDataDiarize(BaseModel):
     account_id: str = None
     account_username: str = None
     # account_username: str = "globalhome"  # DEBUG ONLY

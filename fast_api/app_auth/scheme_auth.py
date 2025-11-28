@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 
-class AuthDataBert(BaseModel):
+class AuthDataDiarize(BaseModel):
     # username: str
     # password: str
     username: str = "temp_zxc"  # DEBUG ONLY
