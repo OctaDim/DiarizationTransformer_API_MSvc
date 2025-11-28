@@ -86,7 +86,7 @@ async def upload_ogg_file_get_job_id(
                     f"upload_file.content_type: {upload_file.content_type}, "
                     f"allowed MIME types: {ALLOWED_FILE_MIME_TYPES}")
         print(log_text)
-        raise HTTPException(status_code=status.HTTP_406_NOT_ACCEPTABLE,
+        raise HTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
                             detail=log_text)
 
     allowed_extensions = ALLOWED_FILE_EXTENSIONS
@@ -100,7 +100,7 @@ async def upload_ogg_file_get_job_id(
                     f"file extension: {file_extension}\n"
                     f"allowed extensions: {allowed_extensions}\n")
         print(log_text)
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+        raise HTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
                             detail=log_text)
 
     orig_audio_file_path = get_full_file_normal_path(
