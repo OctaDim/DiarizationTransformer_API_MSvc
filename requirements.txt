@@ -8,3 +8,8 @@ pydub==0.25.1
 torchcodec==0.7.0
 pandas==2.3.3
 uvicorn==0.38.0
+dotenv==0.9.9
+python-dotenv==1.2.1
+fastapi==0.122.0
+starlette==0.50.0
+pydantic==2.12.5
