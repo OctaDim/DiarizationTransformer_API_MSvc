@@ -97,17 +97,19 @@ FASTAPI_SESSION_KEY = fastapi_conf_parser.get(section=fastapi_conf_name,
 @dataclass(frozen=True)
 class DIARIZE_OPTIONS:
     # API
+    PYANNOTE_API_ROUTERS_TAG: str = "PYANNOTE_API"
+    LOCAL_MODEL_ROUTERS_TAG: str = "MODEL_API"
     DIARIZE_API_URL_BASE_NAME: str = "diarize"
     TEMPORARY_AUDIO_FILE_PREFIX: str = "temp"
     TEMPORARY_AUDIO_FILES_DIR: str = "audio_files/temporary_audio"
     CONVERTED_AUDIO_FILES_DIR: str = "audio_files/temporary_audio"
-    CONVERTED_AUDIO_TYPE_FOR_API: str = "mp3"
-    OPERATOR_TMP_AUDIO_START_TIME = 7000
-    OPERATOR_TMP_AUDIO_END_TIME = 30000
-    CALLER_TMP_AUDIO_START_TIME = 7000
-    CALLER_TMP_AUDIO_END_TIME = 30000
-    ALL_SPEAKERS_TMP_AUDIO_START_TIME = 7000
-    ALL_SPEAKERS_TMP_AUDIO_END_TIME = 30000
+    CONVERTED_AUDIO_TYPE_FOR_API: str = "ogg"
+    OPERATOR_TMP_AUDIO_START_SEC: int | None = 7_000
+    OPERATOR_TMP_AUDIO_END_SEC: int | None = 60_000
+    CALLER_TMP_AUDIO_START_SEC: int | None = 7_000
+    CALLER_TMP_AUDIO_END_SEC: int | None = 60_000
+    ALL_SPEAKERS_TMP_AUDIO_START_SEC: int | None = 7_000
+    ALL_SPEAKERS_TMP_AUDIO_END_SEC: int | None = 60_000
 
 # # GETTING REDIS INI CONFIGS ############################################
 # @dataclass(frozen=True)
