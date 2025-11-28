@@ -16,18 +16,10 @@ def convert_audio_file(
         incoming_audio_file_path: Union[str, PathLike],
         outgoing_audio_file_path: Union[str, PathLike],
         to_audio_format: Union[str, Literal["ogg", "wav", "mp3"]] = "mp3",
-        start_time_msec: int = None,
-        end_time_msec: int = None,
+        start_time_secs: int = None,
+        end_time_secs: int = None,
         channel_left_right: Union[None, Literal["left", "right"]] = None
 ) -> str | PathLike:
-    """ Convert audio file
-    :param incoming_audio_file_path: str or PathLike: full .ogg file path including filename with extension
-    :param outgoing_audio_file_path: str or PathLike: full .wav file path including filename with extension
-    :param to_audio_format: Literal["ogg", "wav", "mp3"]: outgoing audio format
-    :param start_time_msec: int: e.g. 7000. Converted file starts from 7 sec
-    :param end_time_msec: int: e.g. 60000. Converted file ends in 1 min
-    :param channel_left_right: None|Literal["left", "right"]: only left or right channel
-    :return: None (save .wav file into to_wav_file_path path)"""
     check_create_dir_by_file_name(outgoing_audio_file_path)
 
     _, file_extension = os.path.splitext(incoming_audio_file_path)
@@ -35,9 +27,27 @@ def convert_audio_file(
 
     audio = AudioSegment.from_file(file=incoming_audio_file_path,
                                    format=audio_file_format)
-    audio = audio[start_time_msec:end_time_msec]
+    audio_length = len(audio)
+    if start_time_secs is None or start_time_secs < 0:
+        start_time_secs = 0
+    elif start_time_secs > audio_length:
+        start_time_secs = 0
+        print(f"start_time_msec ({start_time_secs})"
+              f"> audio_length ({audio_length}) [WARNING]:\n"
+              f"start_time_msec => 0\n")
 
-    if audio.channels == 2:
+    if end_time_secs is None or end_time_secs < 0:
+        end_time_secs = audio_length
+    elif end_time_secs > audio_length:
+        prev_end_time_secs = end_time_secs
+        end_time_secs = audio_length
+        print(f"end_time_secs ({prev_end_time_secs})"
+              f"> audio_length ({audio_length}) [WARNING]:\n"
+              f"end_time_secs => audio_length ({audio_length})\n")
+
+    audio = audio[start_time_secs:end_time_secs]
+
+    if channel_left_right and audio.channels == 2:
         split_2_mono_audio = audio.split_to_mono()
         if channel_left_right == "left":
             audio = split_2_mono_audio[0]
