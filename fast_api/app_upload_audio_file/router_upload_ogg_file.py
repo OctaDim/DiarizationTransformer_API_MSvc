@@ -216,7 +216,7 @@ async def upload_ogg_file_get_job_id(
             speakers_number=None)
         print(f"\nFUNC RETURN: all_speakers_job_id: {all_speakers_job_id}\n")
 
-        response_message = "Upload audio file [OK]"
+        response_message = "Audio file was uploaded successfully [OK]"
         pyannote_api_job_ids = {
             "operator_job_id": operator_job_id,
             "caller_job_id": caller_job_id,
