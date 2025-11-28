@@ -1,6 +1,9 @@
 import os.path
 import uuid
 
+from fastapi import HTTPException
+from starlette import status
+
 from diarize_common_funcs.durations_by_speakers import calc_durations_by_speakers
 from diarize_common_funcs.get_recognized_segments import get_recognized_segments
 from diarize_common_funcs.interruptions_by_types import count_interruptions_by_types
@@ -25,9 +28,9 @@ operator_object_key = f"{uuid.uuid4()}"
 operator_converted_fpath = convert_audio_file(
     incoming_audio_file_path=ogg_full_fpath,
     # outgoing_audio_file_path=ogg_full_fpath,
-    outgoing_audio_file_path=mp3_full_fpath,
-    # outgoing_audio_file_path=wav_full_fpath,
-    to_audio_format="mp3",
+    # outgoing_audio_file_path=mp3_full_fpath,
+    outgoing_audio_file_path=wav_full_fpath,
+    to_audio_format="wav",
     start_time_secs=7000,
     end_time_secs=60000,
     channel_left_right="right")
@@ -47,13 +50,32 @@ operator_job_id = diarize_wav_by_object_key(
     speakers_number=1)
 print(f"\nFUNC RETURN: operator_job_id: {operator_job_id}\n")
 
-# operator_job_id = "0dd61b85-ff4a-4272-a459-ddd76e999fea"
-operator_resp_output = get_result_by_job_id(
+# operator_job_id = "0dd61b85-ff4a-4272-a459-ddd76e999fea-error"
+operator_resp_data = get_result_by_job_id(
     api_token_key=api_key,
     api_job_id=operator_job_id)
-print(f"\nFUNC RETURN: operator_resp_output: {operator_resp_output}\n")
+print(f"\nFUNC RETURN: operator_resp_data: {operator_resp_data}\n")
 
-operator_diarization = operator_resp_output["diarization"]
+operator_job_output = operator_resp_data["job_output"]
+operator_job_status = operator_resp_data["job_status"]
+operator_job_message = operator_resp_data["job_message"]
+operator_job_error = operator_resp_data["job_error"]
+operator_status_code = operator_resp_data["statusCode"]
+
+if not operator_job_output:
+    log_text = (f"API EMPTY OUTPUT ANSWER [ERROR]:\n"
+                f"dialog_statistics: {None}\n"
+                f"full_dialog_report: {None}\n"
+                f"operator_job_output: {operator_job_output}\n"
+                f"operator_job_status: {operator_job_status}\n"
+                f"operator_job_message: {operator_job_message}\n"
+                f"operator_job_error: {operator_job_error}\n"
+                f"operator_status_code: {operator_status_code}\n")
+    print(log_text)
+    raise HTTPException(status_code=status.HTTP_406_NOT_ACCEPTABLE,
+                        detail=log_text)
+
+operator_diarization = operator_job_output["diarization"]
 operator_first_segment = operator_diarization[0]
 operator_first_start = operator_first_segment["start"]
 print(f"\noperator_first_segment: {operator_first_segment}\n")
@@ -83,12 +105,31 @@ caller_job_id = diarize_wav_by_object_key(
 print(f"\nFUNC RETURN: caller_job_id: {caller_job_id}\n")
 
 # caller_job_id = "0348cd3f-84ee-45eb-a8e0-b9226550f46f"
-caller_resp_output = get_result_by_job_id(
+caller_resp_data = get_result_by_job_id(
     api_token_key=api_key,
     api_job_id=caller_job_id)
-print(f"\nFUNC RETURN: caller_resp_output: {caller_resp_output}\n")
+print(f"\nFUNC RETURN: caller_resp_data: {caller_resp_data}\n")
 
-caller_diarization = caller_resp_output["diarization"]
+caller_job_output = caller_resp_data["job_output"]
+caller_job_status = caller_resp_data["job_status"]
+caller_job_message = caller_resp_data["job_message"]
+caller_job_error = caller_resp_data["job_error"]
+caller_status_code = caller_resp_data["statusCode"]
+
+if not caller_job_output:
+    log_text = (f"API EMPTY OUTPUT ANSWER [ERROR]:\n"
+                f"dialog_statistics: {None}\n"
+                f"full_dialog_report: {None}\n"
+                f"caller_job_output: {caller_job_output}\n"
+                f"caller_job_status: {caller_job_status}\n"
+                f"caller_job_message: {caller_job_message}\n"
+                f"caller_job_error: {caller_job_error}\n"
+                f"caller_status_code: {caller_status_code}\n")
+    print(log_text)
+    raise HTTPException(status_code=status.HTTP_406_NOT_ACCEPTABLE,
+                        detail=log_text)
+
+caller_diarization = caller_job_output["diarization"]
 caller_first_segment = caller_diarization[0]
 caller_first_start = caller_first_segment["start"]
 print(f"\ncaller_first_segment: {caller_first_segment}\n")
@@ -97,10 +138,10 @@ print(f"\ncaller_first_segment_start: {caller_first_start}\n")
 all_speakers_object_key = f"{uuid.uuid4()}"
 all_speakers_converted_fpath = convert_audio_file(
     incoming_audio_file_path=ogg_full_fpath,
-    # outgoing_audio_file_path=ogg_full_fpath,
-    outgoing_audio_file_path=mp3_full_fpath,
+    outgoing_audio_file_path=ogg_full_fpath,
+    # outgoing_audio_file_path=mp3_full_fpath,
     # outgoing_audio_file_path=wav_full_fpath,
-    to_audio_format="mp3",
+    to_audio_format="ogg",
     start_time_secs=7000,
     end_time_secs=None,
     channel_left_right=None)
@@ -119,11 +160,31 @@ all_speakers_job_id = diarize_wav_by_object_key(
 print(f"\nFUNC RETURN: all_speakers_job_id: {all_speakers_job_id}\n")
 
 # all_speakers_job_id = "47a6aae2-897c-4f7f-8dd3-499028f489d9"
-all_speakers_resp_output = get_result_by_job_id(
+all_speakers_resp_data = get_result_by_job_id(
     api_token_key=api_key,
     api_job_id=all_speakers_job_id)
-print(f"\nFUNC RETURN: all_speakers_resp_output: {all_speakers_resp_output}\n")
-all_speakers_diarization = all_speakers_resp_output["diarization"]
+print(f"\nFUNC RETURN: all_speakers_resp_data: {all_speakers_resp_data}\n")
+
+all_speakers_job_output = all_speakers_resp_data["job_output"]
+all_speakers_job_status = all_speakers_resp_data["job_status"]
+all_speakers_job_message = all_speakers_resp_data["job_message"]
+all_speakers_job_error = all_speakers_resp_data["job_error"]
+all_speakers_status_code = all_speakers_resp_data["statusCode"]
+
+if not all_speakers_job_output:
+    log_text = (f"API EMPTY OUTPUT ANSWER [ERROR]:\n"
+                f"dialog_statistics: {None}\n"
+                f"full_dialog_report: {None}\n"
+                f"all_speakers_job_output: {all_speakers_job_output}\n"
+                f"all_speakers_job_status: {all_speakers_job_status}\n"
+                f"all_speakers_job_message: {all_speakers_job_message}\n"
+                f"all_speakers_job_error: {all_speakers_job_error}\n"
+                f"all_speakers_status_code: {all_speakers_status_code}\n")
+    print(log_text)
+    raise HTTPException(status_code=status.HTTP_4406_NOT_ACCEPTABLE,
+                        detail=log_text)
+
+all_speakers_diarization = all_speakers_job_output["diarization"]
 print(f"\nall_speakers_diarization: {all_speakers_diarization}\n")
 all_speakers_first_segm_speaker = all_speakers_diarization[0]["speaker"]
 print(f"\nall_speakers_first_segment_speaker: {all_speakers_first_segm_speaker}\n")
@@ -143,7 +204,7 @@ speakers_durations = calc_durations_by_speakers(
 operator_duration = speakers_durations["operator"]
 caller_duration = speakers_durations["caller"]
 other_duration = speakers_durations["others"]
-total_all_speakers_dur = speakers_durations["total_all_speakers_dur"]
+total_all_speakers_dur = speakers_durations["total_without_silence_dur"]
 total_with_silence_dur = speakers_durations["total_with_silence_dur"]
 
 call_ratios = calc_ratios_by_speakers(
