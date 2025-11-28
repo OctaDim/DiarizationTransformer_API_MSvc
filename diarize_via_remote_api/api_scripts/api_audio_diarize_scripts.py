@@ -12,17 +12,14 @@ from diarize_via_remote_api.api_functions.api_diarize_audio_funcs import (
 
 api_key = "sk_0d466286b6784130a2d669e1a1ab481f"
 
-ogg_full_fpath = "/home/octadim/PycharmProjects/DiarizationTransformer_API_MSvc/audio_samples/ogg/1.ogg"
-wav_full_fpath = "/home/octadim/PycharmProjects/DiarizationTransformer_API_MSvc/audio_samples/wav/1.wav"
-mp3_full_fpath = "/home/octadim/PycharmProjects/DiarizationTransformer_API_MSvc/audio_samples/mp3/1.mp3"
+ogg_full_fpath = r"/home/octadim/PycharmProjects/DiarizationTransformer_API_MSvc/audio_samples/ogg/1.ogg"
+wav_full_fpath = r"/home/octadim/PycharmProjects/DiarizationTransformer_API_MSvc/audio_samples/wav/1.wav"
+mp3_full_fpath = r"/home/octadim/PycharmProjects/DiarizationTransformer_API_MSvc/audio_samples/mp3/1.mp3"
 ogg_full_fpath = os.path.normpath(ogg_full_fpath)
 wav_full_fpath = os.path.normpath(wav_full_fpath)
 
 api_connection_test = test_api(api_key)
 print(f"\nFUNC RETURN: api_connection_test: {api_connection_test}\n")
-print("@@@@@@@@@@@@@@@@@@", api_connection_test.status_code)
-print("@@@@@@@@@@@@@@@@@@", type(api_connection_test.status_code))
-
 
 operator_object_key = f"{uuid.uuid4()}"
 operator_converted_fpath = convert_audio_file(
@@ -30,8 +27,9 @@ operator_converted_fpath = convert_audio_file(
     # outgoing_audio_file_path=ogg_full_fpath,
     outgoing_audio_file_path=mp3_full_fpath,
     # outgoing_audio_file_path=wav_full_fpath,
-    start_time_msec=7000,
-    end_time_msec=60000,
+    to_audio_format="mp3",
+    start_time_secs=7000,
+    end_time_secs=60000,
     channel_left_right="right")
 print(f"\nFUNC RETURN: operator_converted_fpath: "
       f"{operator_converted_fpath}\n")
@@ -64,10 +62,12 @@ print(f"\noperator_first_segment_start: {operator_first_start}\n")
 caller_object_key = f"{uuid.uuid4()}"
 caller_converted_fpath = convert_audio_file(
     incoming_audio_file_path=ogg_full_fpath,
+    # outgoing_audio_file_path=ogg_full_fpath,
     outgoing_audio_file_path=mp3_full_fpath,
     # outgoing_audio_file_path=wav_full_fpath,
-    start_time_msec=7000,
-    end_time_msec=60000,
+    to_audio_format="mp3",
+    start_time_secs=7000,
+    end_time_secs=60000,
     channel_left_right="left")
 
 caller_presigned_url = upload_audio_file(
@@ -97,10 +97,12 @@ print(f"\ncaller_first_segment_start: {caller_first_start}\n")
 all_speakers_object_key = f"{uuid.uuid4()}"
 all_speakers_converted_fpath = convert_audio_file(
     incoming_audio_file_path=ogg_full_fpath,
+    # outgoing_audio_file_path=ogg_full_fpath,
     outgoing_audio_file_path=mp3_full_fpath,
     # outgoing_audio_file_path=wav_full_fpath,
-    start_time_msec=7000,
-    end_time_msec=60000,
+    to_audio_format="mp3",
+    start_time_secs=7000,
+    end_time_secs=None,
     channel_left_right=None)
 
 all_speakers_presigned_url = upload_audio_file(
@@ -130,7 +132,7 @@ recognised_data = get_recognized_segments(
     operator_segments=operator_diarization,
     caller_segments=caller_diarization,
     all_speakers_segments=all_speakers_diarization)
-recognised_diarization = recognised_data["recognized_diarization"]
+recognised_diarization = recognised_data["recognized_diary"]
 first_speaker = recognised_data["first_speaker"]
 print(f"\nДневник разговора:\n"
       f"\tпервым заговорил: {first_speaker}\n"
