@@ -1,5 +1,5 @@
 # pip install pyannote.audio
-
+import json
 import os
 import time
 from os import PathLike
@@ -9,6 +9,7 @@ import requests
 from pydub import AudioSegment
 from requests import Response
 
+from configs.settings import DIARIZE_OPTIONS
 from utils_common.validate_dir_file import check_create_dir_by_file_name
 
 
@@ -137,25 +138,40 @@ def get_result_by_job_id(
         response = requests.get(
             url=f"https://api.pyannote.ai/v1/jobs/{api_job_id}",
             headers={"Authorization": f"Bearer {api_token_key}"})
-        if response.status_code != 200:
+        response_status_code = response.status_code
+        response_json = response.json()
+        response_text = json.loads(response.text)
+
+        cur_job_output = response_json.get("output", None) if response_json else None
+        cur_job_status = response_json.get("status", None) if response_json else None
+        cur_job_message = response_text.get("message", None) if response_text else None
+        cur_job_error = response_text.get("error", None) if response_text else None
+        response_data = {"job_output": cur_job_output,
+                         "job_status": cur_job_status,
+                         "job_message": cur_job_message,
+                         "job_error": cur_job_error,
+                         "statusCode": response_status_code}
+
+        if response_status_code != 200:
             print(f"Get job result by job id [ERROR]:\n"
                   f"response.status_code: {response.status_code}\n"
                   f"response.text: {response.text}\n")
-            break
-        response_json = response.json()
-        response_status = response_json["status"]
-        response_output = response_json["output"]
-        print("\n>>>>>>>>>>>>>>>>>>>>>>>>")
-        print(f"response_status: {response_status}")
-        print(f"response_json: {response_json}")
-        print(f"response_output: {response_output}")
-        if response_status == "created":
-            print(f"CURRENT JOB STATUS: '{response_status}' ==> waiting...\n")
-            time.sleep(5)
+            return response_data
+
+        print(f"\n{'>' * 75}\n"
+              f"response_status_code: {response_status_code}\n"
+              f"cur_job_status: {cur_job_status}\n"
+              f"cur_job_output: {cur_job_output}"
+              f"response_text (json): {response.text}\n"
+              "response_json (dict): {response_json}\n")
+
+        if cur_job_status in ["created", "running"]:
+            print(f"CURRENT JOB STATUS [WAITING...]: '{cur_job_status}'\n")
+            time.sleep(DIARIZE_OPTIONS.PYANNOTE_API_REQUEST_PAUSE)
             continue
-        elif response_status in ["failed", "canceled"]:
-            print(f"CURRENT JOB STATUS: '{response_status}' ==> broken\n")
-            break
-        elif response_status == "succeeded":
-            print(f"CURRENT JOB STATUS: '{response_status}' ==> succeeded\n")
-            return response_output
+        elif cur_job_status in ["failed", "canceled"]:
+            print(f"CURRENT JOB STATUS [ERROR]: '{cur_job_status}'\n")
+            return response_data
+        elif cur_job_status == "succeeded":
+            print(f"CURRENT JOB STATUS [OK]: '{cur_job_status}'\n")
+            return response_data

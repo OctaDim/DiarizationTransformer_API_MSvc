@@ -7,16 +7,12 @@ from fastapi.responses import JSONResponse
 
 from configs.console_colors import CONSOLE_COLORS
 from configs.settings import DIARIZE_OPTIONS
-from diarize_common_funcs.durations_by_speakers import calc_durations_by_speakers
-from diarize_common_funcs.get_recognized_segments import get_recognized_segments
-from diarize_common_funcs.interruptions_by_types import count_interruptions_by_types
-from diarize_common_funcs.overlaps_by_types import calc_overlaps_by_types
-from diarize_common_funcs.overlaps_ratios import calc_overlaps_ratios
-from diarize_common_funcs.ratios_by_speakers import calc_ratios_by_speakers
-from diarize_via_remote_api.api_functions.api_diarize_audio_funcs import test_api, get_result_by_job_id
+from diarize_via_remote_api.api_functions.api_diarize_audio_funcs import (
+    test_api, get_result_by_job_id)
 from fast_api.app_auth.funcs_auth import verify_prod_username_password
 from fast_api.app_auth.scheme_auth import AuthDataDiarize
-from fast_api.get_dialog_statistics.func_get_dialog_statistics import calc_dialog_statistics
+from fast_api.get_dialog_statistics.func_get_dialog_statistics import (
+    calc_dialog_statistics)
 from fast_api.get_dialog_statistics.scheme_dialog_statistics import (
     PyannoteApiData, PyannoteApiJobIds)
 
@@ -52,70 +48,91 @@ async def get_dialog_statistics_by_job_ids(
     operator_job_id = pyannote_api_job_ids.operator_job_id
     caller_job_id = pyannote_api_job_ids.caller_job_id
     all_speakers_job_id = pyannote_api_job_ids.all_speakers_job_id
-    # operator_job_id = "0dd61b85-ff4a-4272-a459-ddd76e999fea"
-    # caller_job_id = "0348cd3f-84ee-45eb-a8e0-b9226550f46f"
-    # all_speakers_job_id = "47a6aae2-897c-4f7f-8dd3-499028f489d9"
 
-    operator_resp_output = get_result_by_job_id(
+    operator_resp_data = get_result_by_job_id(
         api_token_key=pyannote_api_token,
         api_job_id=operator_job_id)
-    print(f"\nFUNC RETURN: operator_resp_output: {operator_resp_output}\n")
+    print(f"\nFUNC RETURN: operator_resp_data: {operator_resp_data}\n")
 
-    if not operator_resp_output:
-        log_text = (f"Not valid operator_job_id "
-                    f"(API return None) [ERROR]:\n"
-                    f"operator_job_id: {operator_job_id}\n"
-                    f"operator_resp_output: {operator_resp_output}\n")
+    operator_job_output = operator_resp_data["job_output"]
+    operator_job_status = operator_resp_data["job_status"]
+    operator_job_message = operator_resp_data["job_message"]
+    operator_job_error = operator_resp_data["job_error"]
+    operator_status_code = operator_resp_data["statusCode"]
+
+    if not operator_job_output:
+        log_text = (f"API EMPTY OUTPUT ANSWER (Operator job output) [ERROR]:\n"
+                    f"operator_job_output: {operator_job_output}\n"
+                    f"operator_job_status: {operator_job_status}\n"
+                    f"operator_job_message: {operator_job_message}\n"
+                    f"operator_job_error: {operator_job_error}\n"
+                    f"operator_status_code: {operator_status_code}\n")
         print(log_text)
         raise HTTPException(status_code=status.HTTP_406_NOT_ACCEPTABLE,
                             detail=log_text)
 
-    operator_diarization = operator_resp_output["diarization"]
+    operator_diarization = operator_job_output["diarization"]
     operator_first_segment = operator_diarization[0]
     operator_first_start = operator_first_segment["start"]
     print(f"\noperator_first_segment: {operator_first_segment}\n")
     print(f"\noperator_first_segment_start: {operator_first_start}\n")
 
-    caller_resp_output = get_result_by_job_id(
+    caller_resp_data = get_result_by_job_id(
         api_token_key=pyannote_api_token,
         api_job_id=caller_job_id)
-    print(f"\nFUNC RETURN: caller_resp_output: {caller_resp_output}\n")
+    print(f"\nFUNC RETURN: caller_resp_data: {caller_resp_data}\n")
 
-    if not caller_resp_output:
-        log_text = (f"Not valid caller_resp_output "
-                    f"(API return None) [ERROR]:\n"
-                    f"caller_job_id: {caller_job_id}\n"
-                    f"caller_resp_output: {caller_resp_output}\n")
+    caller_job_output = caller_resp_data["job_output"]
+    caller_job_status = caller_resp_data["job_status"]
+    caller_job_message = caller_resp_data["job_message"]
+    caller_job_error = caller_resp_data["job_error"]
+    caller_status_code = caller_resp_data["statusCode"]
+
+    if not caller_job_output:
+        log_text = (f"API EMPTY OUTPUT ANSWER (caller job output) [ERROR]:\n"
+                    f"caller_job_output: {caller_job_output}\n"
+                    f"caller_job_status: {caller_job_status}\n"
+                    f"caller_job_message: {caller_job_message}\n"
+                    f"caller_job_error: {caller_job_error}\n"
+                    f"caller_status_code: {caller_status_code}\n")
         print(log_text)
         raise HTTPException(status_code=status.HTTP_406_NOT_ACCEPTABLE,
                             detail=log_text)
 
-    caller_diarization = caller_resp_output["diarization"]
+    caller_diarization = caller_job_output["diarization"]
     caller_first_segment = caller_diarization[0]
     caller_first_start = caller_first_segment["start"]
     print(f"\ncaller_first_segment: {caller_first_segment}\n")
     print(f"\ncaller_first_segment_start: {caller_first_start}\n")
 
-    all_speakers_resp_output = get_result_by_job_id(
+    all_speakers_resp_data = get_result_by_job_id(
         api_token_key=pyannote_api_token,
         api_job_id=all_speakers_job_id)
-    print(f"\nFUNC RETURN: all_speakers_resp_output: {all_speakers_resp_output}\n")
+    print(f"\nFUNC RETURN: all_speakers_resp_data: {all_speakers_resp_data}\n")
 
-    if not all_speakers_resp_output:
-        log_text = (f"Not valid all_speakers_resp_output "
-                    f"(API return None) [ERROR]:\n"
-                    f"all_speakers_job_id: {all_speakers_job_id}\n"
-                    f"all_speakers_resp_output: {all_speakers_resp_output}\n")
+    all_speakers_job_output = all_speakers_resp_data["job_output"]
+    all_speakers_job_status = all_speakers_resp_data["job_status"]
+    all_speakers_job_message = all_speakers_resp_data["job_message"]
+    all_speakers_job_error = all_speakers_resp_data["job_error"]
+    all_speakers_status_code = all_speakers_resp_data["statusCode"]
+
+    if not all_speakers_job_output:
+        log_text = (f"API EMPTY OUTPUT ANSWER (all_speakers job output) [ERROR]:\n"
+                    f"all_speakers_job_output: {all_speakers_job_output}\n"
+                    f"all_speakers_job_status: {all_speakers_job_status}\n"
+                    f"all_speakers_job_message: {all_speakers_job_message}\n"
+                    f"all_speakers_job_error: {all_speakers_job_error}\n"
+                    f"all_speakers_status_code: {all_speakers_status_code}\n")
         print(log_text)
         raise HTTPException(status_code=status.HTTP_406_NOT_ACCEPTABLE,
                             detail=log_text)
 
-    all_speakers_diarization = all_speakers_resp_output["diarization"]
+    all_speakers_diarization = all_speakers_job_output["diarization"]
     print(f"\nall_speakers_diarization: {all_speakers_diarization}\n")
     all_speakers_first_segm_speaker = all_speakers_diarization[0]["speaker"]
     print(f"\nall_speakers_first_segment_speaker: {all_speakers_first_segm_speaker}\n")
 
-    await calc_dialog_statistics(
+    full_dialog_statistics = await calc_dialog_statistics(
         operator_diarization=operator_diarization,
         caller_diarization=caller_diarization,
         all_speakers_diarization=all_speakers_diarization)

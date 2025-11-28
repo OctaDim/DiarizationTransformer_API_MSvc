@@ -98,6 +98,7 @@ FASTAPI_SESSION_KEY = fastapi_conf_parser.get(section=fastapi_conf_name,
 class DIARIZE_OPTIONS:
     # API
     PYANNOTE_API_ROUTERS_TAG: str = "PYANNOTE_API"
+    PYANNOTE_API_REQUEST_PAUSE: int = 2
     LOCAL_MODEL_ROUTERS_TAG: str = "MODEL_API"
     DIARIZE_API_URL_BASE_NAME: str = "diarize"
     TEMPORARY_AUDIO_FILE_PREFIX: str = "temp"
