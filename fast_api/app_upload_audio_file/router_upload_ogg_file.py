@@ -10,25 +10,29 @@ from fastapi.responses import JSONResponse
 
 from configs.console_colors import CONSOLE_COLORS
 from configs.settings import DIARIZE_OPTIONS, BASE_DIR
-from diarize_via_remote_api.api_functions.api_diarize_audio_funcs import test_api, convert_audio_file, \
-    upload_audio_file, diarize_wav_by_object_key
+from diarize_via_remote_api.api_functions.api_diarize_audio_funcs import (
+    test_api, convert_audio_file, upload_audio_file,
+    diarize_wav_by_object_key)
 from fast_api.app_auth.funcs_auth import verify_prod_username_password
 from utils_common.get_file_name_extra_part import (
     get_file_name_with_extra_part)
-from utils_common.normalized_path import get_full_file_normal_path, get_full_dir_normal_path
-from utils_common.validate_dir_file import check_create_dir_by_file_name
+from utils_common.normalized_path import (
+    get_full_file_normal_path, get_full_dir_normal_path)
+from utils_common.validate_dir_file import (
+    check_create_dir_by_file_name)
 
 diarize_base_url_name = DIARIZE_OPTIONS.DIARIZE_API_URL_BASE_NAME
-router_upload_audio_file = APIRouter(prefix=f"/{diarize_base_url_name}",
-                                     tags=["EX_API"])
+router_upload_audio_file = APIRouter(
+    prefix=f"/{diarize_base_url_name}",
+    tags=[DIARIZE_OPTIONS.PYANNOTE_API_ROUTERS_TAG])
 
 
-@router_upload_audio_file.post(path="/upload_ogg_file/",
+@router_upload_audio_file.post(path="/upload_audio_file/",
                                # TODO: Describe responses here
                                response_model=None)
 async def upload_ogg_file_get_job_id(
         upload_file: Annotated[UploadFile, File(
-            description="file: .ogg, mp3 or .wav")],
+            description="file .ogg, mp3 or .wav")],
         username: Annotated[str, Form()],
         password: Annotated[str, Form()],
         pyannote_api_token: Annotated[str, Form()],
@@ -54,17 +58,14 @@ async def upload_ogg_file_get_job_id(
     ALLOWED_FILE_MIME_TYPES = (
         "audio/ogg", "application/ogg",  # .ogg
         "audio/wav", "audio/x-wav", "audio/wave",  # .wav
-        "audio/mpeg",  # .mp3
-        # "audio/mp4",  # .m4a, .mp4  #TODO: mp4
-    )
+        "audio/mpeg")  # .mp3
 
-    OPERATOR_TEMP_AUDIO_START = DIARIZE_OPTIONS.OPERATOR_TMP_AUDIO_START_TIME
-    OPERATOR_TEMP_AUDIO_END = DIARIZE_OPTIONS.OPERATOR_TMP_AUDIO_END_TIME
-    CALLER_TEMP_AUDIO_START = DIARIZE_OPTIONS.CALLER_TMP_AUDIO_START_TIME
-    CALLER_TEMP_AUDIO_END = DIARIZE_OPTIONS.CALLER_TMP_AUDIO_END_TIME
-    ALL_SPEAKERS_TMP_AUDIO_START = DIARIZE_OPTIONS.ALL_SPEAKERS_TMP_AUDIO_START_TIME
-    ALL_SPEAKERS_TMP_AUDIO_END = DIARIZE_OPTIONS.ALL_SPEAKERS_TMP_AUDIO_END_TIME
-
+    OPERATOR_TEMP_AUDIO_START = DIARIZE_OPTIONS.OPERATOR_TMP_AUDIO_START_SEC
+    OPERATOR_TEMP_AUDIO_END = DIARIZE_OPTIONS.OPERATOR_TMP_AUDIO_END_SEC
+    CALLER_TEMP_AUDIO_START = DIARIZE_OPTIONS.CALLER_TMP_AUDIO_START_SEC
+    CALLER_TEMP_AUDIO_END = DIARIZE_OPTIONS.CALLER_TMP_AUDIO_END_SEC
+    ALL_SPEAKERS_TMP_AUDIO_START = DIARIZE_OPTIONS.ALL_SPEAKERS_TMP_AUDIO_START_SEC
+    ALL_SPEAKERS_TMP_AUDIO_END = DIARIZE_OPTIONS.ALL_SPEAKERS_TMP_AUDIO_END_SEC
 
     if not upload_file:
         log_text = (f"Audio file {ALLOWED_FILE_EXTENSIONS} not passed [ERROR]: "
@@ -72,7 +73,8 @@ async def upload_ogg_file_get_job_id(
         print(log_text)
         raise HTTPException(status_code=status.HTTP_406_NOT_ACCEPTABLE,
                             detail=log_text)
-    elif not pyannote_api_token:
+
+    if not pyannote_api_token:
         log_text = (f"Empty PyAnnote API token [ERROR]: "
                     f"pyannote_api_token: {pyannote_api_token}")
         print(log_text)
@@ -84,7 +86,7 @@ async def upload_ogg_file_get_job_id(
                     f"upload_file.content_type: {upload_file.content_type}, "
                     f"allowed MIME types: {ALLOWED_FILE_MIME_TYPES}")
         print(log_text)
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+        raise HTTPException(status_code=status.HTTP_406_NOT_ACCEPTABLE,
                             detail=log_text)
 
     allowed_extensions = ALLOWED_FILE_EXTENSIONS
@@ -115,6 +117,14 @@ async def upload_ogg_file_get_job_id(
             full_file_path=tmp_audio_f_extra_name_path)
 
         upload_content = await upload_file.read()
+        uploaded_file_size = len(upload_content)
+        if 0 <= uploaded_file_size <= 100:
+            log_text = ("Uploaded file is zero bytes or too small [ERROR]:"
+                        "uploaded_file_size: {uploaded_file_size}\n")
+            print(log_text)
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail=log_text)
+
         with open(tmp_audio_f_extra_name_path, "wb") as audio_file:
             audio_file.write(upload_content)
         print(f"Temporary audio file created [OK]: "
@@ -123,29 +133,29 @@ async def upload_ogg_file_get_job_id(
         audio_file_extra_name = os.path.basename(tmp_audio_f_extra_name_path)
         file_extra_name, file_extension = os.path.splitext(audio_file_extra_name)
 
-        audio_type_for_api = DIARIZE_OPTIONS.CONVERTED_AUDIO_TYPE_FOR_API
-        right_channel_audio_f_path = get_full_file_normal_path(
-            all_dir_str_parts=[BASE_DIR, DIARIZE_OPTIONS.CONVERTED_AUDIO_FILES_DIR],
-            file_name_with_ext=f"{file_extra_name}_(RIGHT).{audio_type_for_api}")
-        left_channel_audio_f_path = get_full_file_normal_path(
-            all_dir_str_parts=[BASE_DIR, DIARIZE_OPTIONS.CONVERTED_AUDIO_FILES_DIR],
-            file_name_with_ext=f"{file_extra_name}_(LEFT).{audio_type_for_api}")
-        stereo_channel_audio_f_path = get_full_file_normal_path(
-            all_dir_str_parts=[BASE_DIR, DIARIZE_OPTIONS.CONVERTED_AUDIO_FILES_DIR],
-            file_name_with_ext=f"{file_extra_name}_(STEREO).{audio_type_for_api}")
-
         converted_files_dir_path = get_full_dir_normal_path(
             all_dir_str_parts=[BASE_DIR, DIARIZE_OPTIONS.CONVERTED_AUDIO_FILES_DIR])
         check_create_dir_by_file_name(
             full_file_path=converted_files_dir_path)
+
+        audio_type_for_api = DIARIZE_OPTIONS.CONVERTED_AUDIO_TYPE_FOR_API
+        right_channel_audio_f_path = get_full_file_normal_path(
+            all_dir_str_parts=[converted_files_dir_path],
+            file_name_with_ext=f"{file_extra_name}_(RIGHT).{audio_type_for_api}")
+        left_channel_audio_f_path = get_full_file_normal_path(
+            all_dir_str_parts=[converted_files_dir_path],
+            file_name_with_ext=f"{file_extra_name}_(LEFT).{audio_type_for_api}")
+        stereo_channel_audio_f_path = get_full_file_normal_path(
+            all_dir_str_parts=[converted_files_dir_path],
+            file_name_with_ext=f"{file_extra_name}_(STEREO).{audio_type_for_api}")
 
         operator_object_key = f"{uuid.uuid4()}"
         operator_converted_fpath = convert_audio_file(
             incoming_audio_file_path=tmp_audio_f_extra_name_path,
             outgoing_audio_file_path=right_channel_audio_f_path,
             to_audio_format=audio_type_for_api,
-            start_time_msec=OPERATOR_TEMP_AUDIO_START,
-            end_time_msec=OPERATOR_TEMP_AUDIO_END,
+            start_time_secs=OPERATOR_TEMP_AUDIO_START,
+            end_time_secs=OPERATOR_TEMP_AUDIO_END,
             channel_left_right="right")
         print(f"\nFUNC RETURN: operator_converted_fpath: "
               f"{operator_converted_fpath}\n")
@@ -160,7 +170,7 @@ async def upload_ogg_file_get_job_id(
         operator_job_id = diarize_wav_by_object_key(
             api_tmp_file_obj_key=operator_object_key,
             api_token_key=pyannote_api_token,
-            speakers_number=1)
+            speakers_number=None)
         print(f"\nFUNC RETURN: operator_job_id: {operator_job_id}\n")
 
         caller_object_key = f"{uuid.uuid4()}"
@@ -168,8 +178,8 @@ async def upload_ogg_file_get_job_id(
             incoming_audio_file_path=tmp_audio_f_extra_name_path,
             outgoing_audio_file_path=left_channel_audio_f_path,
             to_audio_format=audio_type_for_api,
-            start_time_msec=CALLER_TEMP_AUDIO_START,
-            end_time_msec=CALLER_TEMP_AUDIO_END,
+            start_time_secs=CALLER_TEMP_AUDIO_START,
+            end_time_secs=CALLER_TEMP_AUDIO_END,
             channel_left_right="left")
 
         caller_presigned_url = upload_audio_file(
@@ -181,7 +191,7 @@ async def upload_ogg_file_get_job_id(
         caller_job_id = diarize_wav_by_object_key(
             api_tmp_file_obj_key=caller_object_key,
             api_token_key=pyannote_api_token,
-            speakers_number=1)
+            speakers_number=None)
         print(f"\nFUNC RETURN: caller_job_id: {caller_job_id}\n")
 
         all_speakers_object_key = f"{uuid.uuid4()}"
@@ -189,8 +199,8 @@ async def upload_ogg_file_get_job_id(
             incoming_audio_file_path=tmp_audio_f_extra_name_path,
             outgoing_audio_file_path=stereo_channel_audio_f_path,
             to_audio_format=audio_type_for_api,
-            start_time_msec=ALL_SPEAKERS_TMP_AUDIO_START,
-            end_time_msec=ALL_SPEAKERS_TMP_AUDIO_END,
+            start_time_secs=ALL_SPEAKERS_TMP_AUDIO_START,
+            end_time_secs=ALL_SPEAKERS_TMP_AUDIO_END,
             channel_left_right=None)
 
         all_speakers_presigned_url = upload_audio_file(
@@ -203,7 +213,7 @@ async def upload_ogg_file_get_job_id(
         all_speakers_job_id = diarize_wav_by_object_key(
             api_tmp_file_obj_key=all_speakers_object_key,
             api_token_key=pyannote_api_token,
-            speakers_number=2)
+            speakers_number=None)
         print(f"\nFUNC RETURN: all_speakers_job_id: {all_speakers_job_id}\n")
 
         response_message = "Upload audio file [OK]"
@@ -212,9 +222,9 @@ async def upload_ogg_file_get_job_id(
             "caller_job_id": caller_job_id,
             "all_speakers_job_id": all_speakers_job_id}
 
-        operator_frame_str = f"[ {OPERATOR_TEMP_AUDIO_START} : {OPERATOR_TEMP_AUDIO_END} ]"
-        caller_frame_str = f"[ {CALLER_TEMP_AUDIO_START} : {CALLER_TEMP_AUDIO_END} ]"
-        all_speakers_frame_str = f"[ {ALL_SPEAKERS_TMP_AUDIO_START} : {ALL_SPEAKERS_TMP_AUDIO_END} ]"
+        operator_frame_str = f"[{OPERATOR_TEMP_AUDIO_START}:{OPERATOR_TEMP_AUDIO_END}]"
+        caller_frame_str = f"[{CALLER_TEMP_AUDIO_START}:{CALLER_TEMP_AUDIO_END}]"
+        all_speakers_frame_str = f"[{ALL_SPEAKERS_TMP_AUDIO_START}:{ALL_SPEAKERS_TMP_AUDIO_END}]"
 
         json_content = {
             "message": response_message,
