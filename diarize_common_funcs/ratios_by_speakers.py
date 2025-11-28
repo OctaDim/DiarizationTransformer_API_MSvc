@@ -4,7 +4,7 @@ def calc_ratios_by_speakers(
     operator_duration = durations_by_speakers["operator"]
     caller_duration = durations_by_speakers["caller"]
     others_duration = durations_by_speakers["others"]
-    total_duration = durations_by_speakers["total_all_speakers_dur"]
+    total_duration = durations_by_speakers["total_without_silence_dur"]
 
     if total_duration:
         speakers_rates = {
