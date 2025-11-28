@@ -65,6 +65,7 @@ async def get_dialog_statistics_by_job_ids(
     if not operator_job_output:
         log_text = (f"API EMPTY OUTPUT ANSWER [ERROR]:\n"
                     f"dialog_statistics: {None}\n"
+                    f"full_dialog_report: {None}\n"
                     f"operator_job_output: {operator_job_output}\n"
                     f"operator_job_status: {operator_job_status}\n"
                     f"operator_job_message: {operator_job_message}\n"
@@ -94,6 +95,7 @@ async def get_dialog_statistics_by_job_ids(
     if not caller_job_output:
         log_text = (f"API EMPTY OUTPUT ANSWER [ERROR]:\n"
                     f"dialog_statistics: {None}\n"
+                    f"full_dialog_report: {None}\n"
                     f"caller_job_output: {caller_job_output}\n"
                     f"caller_job_status: {caller_job_status}\n"
                     f"caller_job_message: {caller_job_message}\n"
@@ -123,13 +125,14 @@ async def get_dialog_statistics_by_job_ids(
     if not all_speakers_job_output:
         log_text = (f"API EMPTY OUTPUT ANSWER [ERROR]:\n"
                     f"dialog_statistics: {None}\n"
+                    f"full_dialog_report: {None}\n"
                     f"all_speakers_job_output: {all_speakers_job_output}\n"
                     f"all_speakers_job_status: {all_speakers_job_status}\n"
                     f"all_speakers_job_message: {all_speakers_job_message}\n"
                     f"all_speakers_job_error: {all_speakers_job_error}\n"
                     f"all_speakers_status_code: {all_speakers_status_code}\n")
         print(log_text)
-        raise HTTPException(status_code=status.HTTP_406_NOT_ACCEPTABLE,
+        raise HTTPException(status_code=status.HTTP_4406_NOT_ACCEPTABLE,
                             detail=log_text)
 
     all_speakers_diarization = all_speakers_job_output["diarization"]
