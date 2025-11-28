@@ -11,10 +11,12 @@ from configs.settings import FASTAPI_SESSION_KEY, API_HOST, API_PORT, FASTAPI_OP
 from fast_api.app_root_url.router_main import router_root_url
 from fast_api.app_test_endpoint.router_test_endpoint import router_develop_test_endpoint
 from fast_api.app_upload_audio_file.router_upload_ogg_file import router_upload_audio_file
+from fast_api.get_dialog_statistics.router_dialog_statistics import router_get_dialog_statistics
 
 routers_list = [
     router_root_url,
     router_upload_audio_file,
+    router_get_dialog_statistics,
 
     # Test end-point (debug time)
     router_develop_test_endpoint,
