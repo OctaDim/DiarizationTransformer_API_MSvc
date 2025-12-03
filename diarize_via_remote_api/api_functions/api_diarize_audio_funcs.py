@@ -165,8 +165,12 @@ def get_result_by_job_id(
               f"response_text (json): {response.text}\n"
               "response_json (dict): {response_json}\n")
 
+        immediate_response_flag = DIARIZE_OPTIONS.PYANNOTE_API_IMMEDIATE_RESPONSE
         if cur_job_status in ["created", "running"]:
-            print(f"CURRENT JOB STATUS [WAITING...]: '{cur_job_status}'\n")
+            if immediate_response_flag:
+                print(f"CURRENT JOB STATUS [WAIT.....]: '{cur_job_status}'\n")
+                return response_data
+            print(f"CURRENT JOB STATUS [WAITING.....]: '{cur_job_status}'\n")
             time.sleep(DIARIZE_OPTIONS.PYANNOTE_API_REQUEST_PAUSE)
             continue
         elif cur_job_status in ["failed", "canceled"]:

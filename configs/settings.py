@@ -99,18 +99,22 @@ class DIARIZE_OPTIONS:
     # API
     PYANNOTE_API_ROUTERS_TAG: str = "PYANNOTE_API"
     PYANNOTE_API_REQUEST_PAUSE: int = 2
+    PYANNOTE_API_IMMEDIATE_RESPONSE: bool = True
     LOCAL_MODEL_ROUTERS_TAG: str = "MODEL_API"
     DIARIZE_API_URL_BASE_NAME: str = "diarize"
     TEMPORARY_AUDIO_FILE_PREFIX: str = "temp"
     TEMPORARY_AUDIO_FILES_DIR: str = "audio_files/temporary_audio"
     CONVERTED_AUDIO_FILES_DIR: str = "audio_files/temporary_audio"
     CONVERTED_AUDIO_TYPE_FOR_API: str = "ogg"
-    OPERATOR_TMP_AUDIO_START_SEC: int | None = 7_000
-    OPERATOR_TMP_AUDIO_END_SEC: int | None = 60_000
-    CALLER_TMP_AUDIO_START_SEC: int | None = 7_000
-    CALLER_TMP_AUDIO_END_SEC: int | None = 60_000
-    ALL_SPEAKERS_TMP_AUDIO_START_SEC: int | None = 7_000
-    ALL_SPEAKERS_TMP_AUDIO_END_SEC: int | None = 60_000
+    OPERATOR_TMP_AUDIO_START_SEC: int | None = 7_000  # 7 seconds
+    OPERATOR_TMP_AUDIO_END_SEC: int | None = 60_000  # 60 seconds
+    OPERATOR_CHANNEL_SPEAKERS_NUM: int = 1
+    CALLER_TMP_AUDIO_START_SEC: int | None = 7_000  # 7 seconds
+    CALLER_TMP_AUDIO_END_SEC: int | None = 60_000  # 60 seconds
+    CALLER_CHANNEL_SPEAKERS_NUM: int = 1
+    ALL_SPEAKERS_TMP_AUDIO_START_SEC: int | None = 7_000  # 7 seconds
+    ALL_SPEAKERS_TMP_AUDIO_END_SEC: int | None = None  # 60 seconds
+    ALL_SPEAKERS_CHANNEL_SPEAKERS_NUM: int = 2
 
 # # GETTING REDIS INI CONFIGS ############################################
 # @dataclass(frozen=True)

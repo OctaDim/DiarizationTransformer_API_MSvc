@@ -5,7 +5,6 @@ import base64
 from fastapi import (
     APIRouter, HTTPException, status)
 from fastapi.responses import JSONResponse
-from yaml import full_load
 
 from configs.console_colors import CONSOLE_COLORS
 from configs.settings import DIARIZE_OPTIONS
@@ -62,8 +61,21 @@ async def get_dialog_statistics_by_job_ids(
     operator_job_error = operator_resp_data["job_error"]
     operator_status_code = operator_resp_data["statusCode"]
 
+    if operator_job_status in ["created", "running"]:
+        log_text = (f"GETTING API OPERATOR OUTPUT IN PROCESS [WAIT.....]:\n"
+                    f"dialog_statistics: {None}\n"
+                    f"full_dialog_report: {None}\n"
+                    f"operator_job_output: {operator_job_output}\n"
+                    f"operator_job_status: {operator_job_status}\n"
+                    f"operator_job_message: {operator_job_message}\n"
+                    f"operator_job_error: {operator_job_error}\n"
+                    f"operator_status_code: {operator_status_code}\n")
+        print(log_text)
+        raise HTTPException(status_code=status.HTTP_102_PROCESSING,
+                            detail=log_text)
+
     if not operator_job_output:
-        log_text = (f"API EMPTY OUTPUT ANSWER [ERROR]:\n"
+        log_text = (f"API EMPTY OPERATOR OUTPUT ANSWER [ERROR]:\n"
                     f"dialog_statistics: {None}\n"
                     f"full_dialog_report: {None}\n"
                     f"operator_job_output: {operator_job_output}\n"
@@ -92,8 +104,21 @@ async def get_dialog_statistics_by_job_ids(
     caller_job_error = caller_resp_data["job_error"]
     caller_status_code = caller_resp_data["statusCode"]
 
+    if caller_job_status in ["created", "running"]:
+        log_text = (f"GETTING API CALLER OUTPUT IN PROCESS [WAIT.....]:\n"
+                    f"dialog_statistics: {None}\n"
+                    f"full_dialog_report: {None}\n"
+                    f"caller_job_output: {caller_job_output}\n"
+                    f"caller_job_status: {caller_job_status}\n"
+                    f"caller_job_message: {caller_job_message}\n"
+                    f"caller_job_error: {caller_job_error}\n"
+                    f"caller_status_code: {caller_status_code}\n")
+        print(log_text)
+        raise HTTPException(status_code=status.HTTP_102_PROCESSING,
+                            detail=log_text)
+
     if not caller_job_output:
-        log_text = (f"API EMPTY OUTPUT ANSWER [ERROR]:\n"
+        log_text = (f"API EMPTY CALLER OUTPUT ANSWER [ERROR]:\n"
                     f"dialog_statistics: {None}\n"
                     f"full_dialog_report: {None}\n"
                     f"caller_job_output: {caller_job_output}\n"
@@ -122,8 +147,8 @@ async def get_dialog_statistics_by_job_ids(
     all_speakers_job_error = all_speakers_resp_data["job_error"]
     all_speakers_status_code = all_speakers_resp_data["statusCode"]
 
-    if not all_speakers_job_output:
-        log_text = (f"API EMPTY OUTPUT ANSWER [ERROR]:\n"
+    if all_speakers_job_status in ["created", "running"]:
+        log_text = (f"GETTING API ALL SPEAKERS OUTPUT IN PROCESS [WAIT.....]:\n"
                     f"dialog_statistics: {None}\n"
                     f"full_dialog_report: {None}\n"
                     f"all_speakers_job_output: {all_speakers_job_output}\n"
@@ -132,7 +157,20 @@ async def get_dialog_statistics_by_job_ids(
                     f"all_speakers_job_error: {all_speakers_job_error}\n"
                     f"all_speakers_status_code: {all_speakers_status_code}\n")
         print(log_text)
-        raise HTTPException(status_code=status.HTTP_4406_NOT_ACCEPTABLE,
+        raise HTTPException(status_code=status.HTTP_102_PROCESSING,
+                            detail=log_text)
+
+    if not all_speakers_job_output:
+        log_text = (f"API EMPTY ALL SPEAKERS OUTPUT ANSWER [ERROR]:\n"
+                    f"dialog_statistics: {None}\n"
+                    f"full_dialog_report: {None}\n"
+                    f"all_speakers_job_output: {all_speakers_job_output}\n"
+                    f"all_speakers_job_status: {all_speakers_job_status}\n"
+                    f"all_speakers_job_message: {all_speakers_job_message}\n"
+                    f"all_speakers_job_error: {all_speakers_job_error}\n"
+                    f"all_speakers_status_code: {all_speakers_status_code}\n")
+        print(log_text)
+        raise HTTPException(status_code=status.HTTP_406_NOT_ACCEPTABLE,
                             detail=log_text)
 
     all_speakers_diarization = all_speakers_job_output["diarization"]
