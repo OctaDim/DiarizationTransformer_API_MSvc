@@ -5,7 +5,8 @@ import uuid
 from typing import Annotated
 
 from fastapi import (
-    APIRouter, File, Form, HTTPException, UploadFile, status)
+    APIRouter, File, Form, HTTPException, UploadFile, status,
+    BackgroundTasks)
 from fastapi.responses import JSONResponse
 
 from configs.console_colors import CONSOLE_COLORS
@@ -14,6 +15,11 @@ from diarize_via_remote_api.api_functions.api_diarize_audio_funcs import (
     test_api, convert_audio_file, upload_audio_file,
     diarize_wav_by_object_key)
 from fast_api.app_auth.funcs_auth import verify_prod_username_password
+from fast_api.app_auth.scheme_auth import AuthDataDiarize
+from fast_api.get_dialog_statistics.router_dialog_statistics import (
+    get_dialog_statistics_by_job_ids)
+from fast_api.get_dialog_statistics.scheme_dialog_statistics import (
+    PyannoteApiData, PyannoteApiJobIds)
 from utils_common.get_file_name_extra_part import (
     get_file_name_with_extra_part)
 from utils_common.normalized_path import (
@@ -38,6 +44,7 @@ async def upload_ogg_file_get_job_id(
         pyannote_api_token: Annotated[str, Form()],
         # account_id: Annotated[str, Form()],
         # account_username: Annotated[str, Form()],
+        background_tasks: BackgroundTasks,  # FastAPI Class for background tasks
 ) -> JSONResponse:
     verify_prod_username_password(username=username,
                                   password=password)
@@ -170,7 +177,7 @@ async def upload_ogg_file_get_job_id(
         operator_job_id = diarize_wav_by_object_key(
             api_tmp_file_obj_key=operator_object_key,
             api_token_key=pyannote_api_token,
-            speakers_number=None)
+            speakers_number=DIARIZE_OPTIONS.OPERATOR_CHANNEL_SPEAKERS_NUM)
         print(f"\nFUNC RETURN: operator_job_id: {operator_job_id}\n")
 
         caller_object_key = f"{uuid.uuid4()}"
@@ -191,7 +198,7 @@ async def upload_ogg_file_get_job_id(
         caller_job_id = diarize_wav_by_object_key(
             api_tmp_file_obj_key=caller_object_key,
             api_token_key=pyannote_api_token,
-            speakers_number=None)
+            speakers_number=DIARIZE_OPTIONS.CALLER_CHANNEL_SPEAKERS_NUM)
         print(f"\nFUNC RETURN: caller_job_id: {caller_job_id}\n")
 
         all_speakers_object_key = f"{uuid.uuid4()}"
@@ -213,14 +220,29 @@ async def upload_ogg_file_get_job_id(
         all_speakers_job_id = diarize_wav_by_object_key(
             api_tmp_file_obj_key=all_speakers_object_key,
             api_token_key=pyannote_api_token,
-            speakers_number=None)
+            speakers_number=DIARIZE_OPTIONS.ALL_SPEAKERS_CHANNEL_SPEAKERS_NUM)
         print(f"\nFUNC RETURN: all_speakers_job_id: {all_speakers_job_id}\n")
 
-        response_message = "Audio file was uploaded successfully [OK]"
         pyannote_api_job_ids = {
             "operator_job_id": operator_job_id,
             "caller_job_id": caller_job_id,
             "all_speakers_job_id": all_speakers_job_id}
+
+        auth_data = AuthDataDiarize(username=username,
+                                    password=password)
+        pyannote_api_data = PyannoteApiData(
+            pyannote_api_token=pyannote_api_token)
+        pyannote_api_job_ids_obj = PyannoteApiJobIds(**pyannote_api_job_ids)
+
+        print("####### BEFORE BACKGROUND GETTING DIALOG STATISTICS BY JOBS IDS")
+        background_tasks.add_task(
+            func=get_dialog_statistics_by_job_ids,
+            auth_data=auth_data,
+            pyannote_api_data=pyannote_api_data,
+            pyannote_api_job_ids=pyannote_api_job_ids_obj)
+        print("####### AFTER BACKGROUND GETTING DIALOG STATISTICS BY JOBS IDS")
+
+        response_message = "Audio file was uploaded successfully [OK]"
 
         operator_frame_str = f"[{OPERATOR_TEMP_AUDIO_START}:{OPERATOR_TEMP_AUDIO_END}]"
         caller_frame_str = f"[{CALLER_TEMP_AUDIO_START}:{CALLER_TEMP_AUDIO_END}]"
@@ -262,7 +284,8 @@ async def upload_ogg_file_get_job_id(
               f"upload_file.content_type: {upload_file.content_type}\n"
               f"upload_file.filename: {upload_file.filename}\n"
               f"username: {username}\n")
-        print("PRELIMINARY 202 RESPONSE AFTER AUDIO FILES UPLOADED")
+        print("PRELIMINARY 202 RESPONSE AFTER AUDIO FILES UPLOADED "
+              "AND BACKGROUND GETTING DIALOG STATISTICS BY JOBS IDS STARTED")
         return json_response
     except Exception as error:
         log_text = f"Upload audio file router [ERROR]: error: {error}"
