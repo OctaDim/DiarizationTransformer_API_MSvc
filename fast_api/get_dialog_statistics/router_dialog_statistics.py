@@ -50,6 +50,15 @@ async def get_dialog_statistics_by_job_ids(
     caller_job_id = pyannote_api_job_ids.caller_job_id
     all_speakers_job_id = pyannote_api_job_ids.all_speakers_job_id
 
+    if not all([operator_job_id, caller_job_id, all_speakers_job_id]):
+        log_text = (f"REQUEST JOB IDS EMPTY VALUE(S) [ERROR]:\n"
+                    f"operator_job_id: {operator_job_id}\n"
+                    f"caller_job_id: {caller_job_id}\n"
+                    f"all_speakers_job_id: {all_speakers_job_id}\n")
+        print(log_text)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail=log_text)
+
     operator_resp_data = get_result_by_job_id(
         api_token_key=pyannote_api_token,
         api_job_id=operator_job_id)
