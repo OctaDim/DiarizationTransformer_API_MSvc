@@ -119,3 +119,6 @@ sudo systemctl reload diarize_micro_auto_daemon
 
 - Остановка службы-димона:
 sudo systemctl stop diarize_micro_auto_daemon.service
+
+- Убрать из автозагрузки службы-димона:
+sudo systemctl disabled diarize_micro_auto_daemon.service
